@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 	"user_service/internal/config"
+	"user_service/internal/repository/balances"
+	"user_service/internal/repository/transactions"
+	balances2 "user_service/internal/service/balances"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
@@ -11,10 +14,13 @@ import (
 )
 
 type App struct {
-	config      config.Config
-	serviceName string
-	logger      *logrus.Logger
-	db          *sqlx.DB
+	config           config.Config
+	serviceName      string
+	balancesRepo     balances.Repository
+	transactionsRepo transactions.Repository
+	balancesService  balances2.Service
+	logger           *logrus.Logger
+	db               *sqlx.DB
 
 	router *fiber.App
 }
@@ -29,9 +35,10 @@ func (a *App) Run() {
 	a.populateConfig()
 	a.initLogger()
 	a.initDatabase()
-	a.initRepos()
-	a.initHandlers()
 	a.initHTTP()
+	a.initRepos()
+	a.initServices()
+	a.initHandlers()
 }
 
 func (a *App) initHTTP() {
@@ -69,7 +76,14 @@ func (a *App) initLogger() {
 }
 
 func (a *App) initRepos() {
-	//пример: a.userRepo = users.NewRepository(a.db, a.logger)
+	a.balancesRepo = balances.NewRepository(a.db, a.logger)
+	a.transactionsRepo = transactions.NewRepository(a.db, a.logger)
+
+	a.logger.Debug("repos created")
+}
+
+func (a *App) initServices() {
+	a.balancesService = balances2.NewService(a.balancesRepo, a.transactionsRepo)
 
 	a.logger.Debug("repos created")
 }
