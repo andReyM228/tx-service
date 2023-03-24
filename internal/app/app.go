@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"log"
 	"user_service/internal/config"
+	balancesHandler "user_service/internal/handler/balances"
 	"user_service/internal/repository/balances"
 	"user_service/internal/repository/transactions"
-	balances2 "user_service/internal/service/balances"
+	balancesService "user_service/internal/service/balances"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
@@ -18,7 +19,8 @@ type App struct {
 	serviceName      string
 	balancesRepo     balances.Repository
 	transactionsRepo transactions.Repository
-	balancesService  balances2.Service
+	balancesService  balancesService.Service
+	balancesHandler  balancesHandler.Handler
 	logger           *logrus.Logger
 	db               *sqlx.DB
 
@@ -35,16 +37,16 @@ func (a *App) Run() {
 	a.populateConfig()
 	a.initLogger()
 	a.initDatabase()
-	a.initHTTP()
 	a.initRepos()
 	a.initServices()
 	a.initHandlers()
+	a.initHTTP()
 }
 
 func (a *App) initHTTP() {
 	a.router = fiber.New()
 
-	//роуты
+	a.router.Post("v1/tx-service/transfer", a.balancesHandler.Transfer)
 
 	a.logger.Debug("fiber api started")
 	_ = a.router.Listen(fmt.Sprintf(":%d", a.config.HTTP.Port))
@@ -53,8 +55,7 @@ func (a *App) initHTTP() {
 func (a *App) initDatabase() {
 	a.logger.Debug("opening database connection")
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable",
 		a.config.DB.Host, a.config.DB.Port, a.config.DB.User, a.config.DB.Password, a.config.DB.DBname)
 
 	db, err := sqlx.Open("postgres", psqlInfo)
@@ -83,13 +84,13 @@ func (a *App) initRepos() {
 }
 
 func (a *App) initServices() {
-	a.balancesService = balances2.NewService(a.balancesRepo, a.transactionsRepo)
+	a.balancesService = balancesService.NewService(a.balancesRepo, a.transactionsRepo)
 
 	a.logger.Debug("repos created")
 }
 
 func (a *App) initHandlers() {
-	//пример: a.userHandler = users_handler.NewHandler(a.userRepo)
+	a.balancesHandler = balancesHandler.NewHandler(a.balancesService)
 	a.logger.Debug("handlers created")
 }
 
