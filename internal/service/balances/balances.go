@@ -29,12 +29,12 @@ func (s Service) SendCoins(tx domain.Transactions) error {
 		return errors.New("not enough balance")
 	}
 
-	transactionCost, err := s.balanceRepo.Get(tx.Amount)
-	if err != nil {
-		return err
-	}
+	//transactionCost, err := s.balanceRepo.Get(tx.Amount)
+	//if err != nil {
+	//	return err
+	//}
 
-	if fromBalance.Amount < transactionCost.Amount {
+	if fromBalance.Amount < tx.Amount {
 		return errors.New("not enough balance for transaction")
 	}
 
