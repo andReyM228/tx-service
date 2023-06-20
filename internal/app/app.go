@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"log"
+
 	"user_service/internal/config"
 	balancesHandler "user_service/internal/handler/balances"
 	"user_service/internal/repository/balances"

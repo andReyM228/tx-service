@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/jmoiron/sqlx"
-	"github.com/sirupsen/logrus"
-
 	"user_service/internal/domain"
 	"user_service/internal/repository"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/sirupsen/logrus"
 )
 
 type Repository struct {

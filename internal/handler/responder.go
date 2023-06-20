@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"github.com/gofiber/fiber/v2"
-
 	"user_service/internal/repository"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func Respond(ctx *fiber.Ctx, statusCode int, payload interface{}) error {

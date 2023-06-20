@@ -1,10 +1,11 @@
 package balances
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"user_service/internal/domain"
 	"user_service/internal/handler"
 	balancesService "user_service/internal/service/balances"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 type Handler struct {

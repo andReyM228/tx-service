@@ -2,14 +2,16 @@ package balances
 
 import (
 	"fmt"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
-	"github.com/sirupsen/logrus"
 	"log"
 	"testing"
+
 	"user_service/internal/domain"
 	"user_service/internal/repository/balances"
 	"user_service/internal/repository/transactions"
+
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 )
 
 func initDatabase() *sqlx.DB {
