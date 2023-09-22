@@ -3,9 +3,9 @@ package balances
 import (
 	"errors"
 
-	"user_service/internal/domain"
-	"user_service/internal/repository/balances"
-	"user_service/internal/repository/transactions"
+	"tx_service/internal/domain"
+	"tx_service/internal/repository/balances"
+	"tx_service/internal/repository/transactions"
 )
 
 type Service struct {

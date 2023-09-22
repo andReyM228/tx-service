@@ -1,18 +1,19 @@
 package app
 
 import (
+	"embed"
 	"fmt"
-	"log"
+	"github.com/andReyM228/lib/database"
 
-	"user_service/internal/config"
-	balancesHandler "user_service/internal/handler/balances"
-	"user_service/internal/repository/balances"
-	"user_service/internal/repository/transactions"
-	balancesService "user_service/internal/service/balances"
+	"tx_service/internal/config"
+	balancesHandler "tx_service/internal/handler/balances"
+	"tx_service/internal/repository/balances"
+	"tx_service/internal/repository/transactions"
+	balancesService "tx_service/internal/service/balances"
 
+	"github.com/andReyM228/lib/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
-	"github.com/sirupsen/logrus"
 )
 
 type App struct {
@@ -22,7 +23,7 @@ type App struct {
 	transactionsRepo transactions.Repository
 	balancesService  balancesService.Service
 	balancesHandler  balancesHandler.Handler
-	logger           *logrus.Logger
+	logger           log.Logger
 	db               *sqlx.DB
 
 	router *fiber.App
@@ -34,10 +35,10 @@ func New(name string) App {
 	}
 }
 
-func (a *App) Run() {
+func (a *App) Run(fs embed.FS) {
 	a.populateConfig()
 	a.initLogger()
-	a.initDatabase()
+	a.initDatabase(fs)
 	a.initRepos()
 	a.initServices()
 	a.initHandlers()
@@ -53,28 +54,12 @@ func (a *App) initHTTP() {
 	_ = a.router.Listen(fmt.Sprintf(":%d", a.config.HTTP.Port))
 }
 
-func (a *App) initDatabase() {
-	a.logger.Debug("opening database connection")
-
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable",
-		a.config.DB.Host, a.config.DB.Port, a.config.DB.User, a.config.DB.Password, a.config.DB.DBname)
-
-	db, err := sqlx.Open("postgres", psqlInfo)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := db.Ping(); err != nil {
-		log.Fatal(err)
-	}
-
-	a.db = db
-	a.logger.Debug("database connected")
+func (a *App) initDatabase(fs embed.FS) {
+	database.InitDatabase(a.logger, a.config.DB, fs)
 }
 
 func (a *App) initLogger() {
-	a.logger = logrus.New()
-	a.logger.SetLevel(logrus.DebugLevel)
+	a.logger = log.Init()
 }
 
 func (a *App) initRepos() {
@@ -98,7 +83,7 @@ func (a *App) initHandlers() {
 func (a *App) populateConfig() {
 	cfg, err := config.ParseConfig()
 	if err != nil {
-		log.Fatal()
+		a.logger.Fatalf("parse config error: ", err)
 	}
 
 	a.config = cfg

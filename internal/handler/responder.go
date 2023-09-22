@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"user_service/internal/repository"
+	"tx_service/internal/repository"
 
 	"github.com/gofiber/fiber/v2"
 )

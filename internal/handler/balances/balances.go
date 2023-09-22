@@ -1,9 +1,9 @@
 package balances
 
 import (
-	"user_service/internal/domain"
-	"user_service/internal/handler"
-	balancesService "user_service/internal/service/balances"
+	"tx_service/internal/domain"
+	"tx_service/internal/handler"
+	balancesService "tx_service/internal/service/balances"
 
 	"github.com/gofiber/fiber/v2"
 )
