@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/andReyM228/lib/database"
+	"github.com/andReyM228/one/chain_client"
 	"gopkg.in/yaml.v3"
 
 	"log"
@@ -10,12 +10,17 @@ import (
 
 type (
 	Config struct {
-		DB   database.DBConfig `yaml:"db"`
-		HTTP HTTP              `yaml:"http"`
+		Chain chain_client.ClientConfig `yaml:"chain"`
+		HTTP  HTTP                      `yaml:"http"`
+		Extra Extra                     `yaml:"extra"`
 	}
 
 	HTTP struct {
 		Port int `yaml:"port"`
+	}
+
+	Extra struct {
+		Mnemonic string `yaml:"mnemonic"`
 	}
 )
 

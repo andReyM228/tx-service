@@ -1,63 +1,38 @@
 package balances
 
 import (
-	"errors"
-
+	"context"
+	"github.com/andReyM228/lib/log"
 	"tx_service/internal/domain"
-	"tx_service/internal/repository/balances"
-	"tx_service/internal/repository/transactions"
+	"tx_service/internal/repository"
 )
 
 type Service struct {
-	balanceRepo     balances.Repository
-	transactionRepo transactions.Repository
+	chainRepo repository.Chain
+	log       log.Logger
 }
 
-func NewService(balanceRepo balances.Repository, transactionRepo transactions.Repository) Service {
+func NewService(chainRepo repository.Chain, log log.Logger) Service {
 	return Service{
-		balanceRepo:     balanceRepo,
-		transactionRepo: transactionRepo,
+		chainRepo: chainRepo,
+		log:       log,
 	}
 }
 
-func (s Service) SendCoins(tx domain.Transactions) error {
-	fromBalance, err := s.balanceRepo.Get(int64(tx.UserIDFrom))
+func (s Service) Issue(ctx context.Context, req domain.Transaction) (string, error) {
+	txHash, err := s.chainRepo.Issue(ctx, req.ToAddress, req.Amount, req.Memo, domain.SignerAccount)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	if fromBalance.Amount == 0 {
-		return errors.New("not enough balance")
-	}
+	return txHash, nil
+}
 
-	//transactionCost, err := s.balanceRepo.Get(tx.Amount)
-	//if err != nil {
-	//	return err
-	//}
-
-	if fromBalance.Amount < tx.Amount {
-		return errors.New("not enough balance for transaction")
-	}
-
-	toBalance, err := s.balanceRepo.Get(int64(tx.UserIDTo))
+func (s Service) Withdraw(ctx context.Context, req domain.Transaction) (string, error) {
+	txHash, err := s.chainRepo.Withdraw(ctx, req.ToAddress, req.Amount, req.Memo, domain.SignerAccount)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	fromBalance.Amount = fromBalance.Amount - tx.Amount
-	toBalance.Amount = toBalance.Amount + tx.Amount
-
-	if err := s.balanceRepo.Update(fromBalance); err != nil {
-		return err
-	}
-
-	if err = s.balanceRepo.Update(toBalance); err != nil {
-		return err
-	}
-
-	if err = s.transactionRepo.Create(tx); err != nil {
-		return err
-	}
-
-	return nil
+	return txHash, nil
 }
