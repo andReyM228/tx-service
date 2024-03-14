@@ -10,9 +10,10 @@ import (
 
 type (
 	Config struct {
-		Chain chain_client.ClientConfig `yaml:"chain"`
-		HTTP  HTTP                      `yaml:"http"`
-		Extra Extra                     `yaml:"extra"`
+		Chain  chain_client.ClientConfig `yaml:"chain"`
+		HTTP   HTTP                      `yaml:"http"`
+		Extra  Extra                     `yaml:"extra"`
+		Rabbit Rabbit                    `yaml:"rabbit"`
 	}
 
 	HTTP struct {
@@ -21,6 +22,10 @@ type (
 
 	Extra struct {
 		Mnemonic string `yaml:"mnemonic"`
+	}
+
+	Rabbit struct {
+		Url string `yaml:"url"`
 	}
 )
 

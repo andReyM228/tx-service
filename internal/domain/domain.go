@@ -1,7 +1,7 @@
 package domain
 
 const (
-	SignerAccount = "tx-service-account"
+	SignerAccount = "tx-services-account"
 )
 
 type Transaction struct {

@@ -3,16 +3,19 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/andReyM228/lib/bus"
+	"github.com/andReyM228/lib/rabbit"
 	"github.com/andReyM228/one/chain_client"
+	"tx_service/internal/delivery"
+	"tx_service/internal/delivery/broker/transfers"
+	balancesHandler "tx_service/internal/delivery/http/balances"
 	"tx_service/internal/domain"
-	"tx_service/internal/handler"
-	"tx_service/internal/repository"
-	"tx_service/internal/repository/chain"
-	"tx_service/internal/service"
+	"tx_service/internal/repositories"
+	"tx_service/internal/repositories/chain"
+	"tx_service/internal/services"
 
 	"tx_service/internal/config"
-	balancesHandler "tx_service/internal/handler/balances"
-	balancesService "tx_service/internal/service/balances"
+	balancesService "tx_service/internal/services/balances"
 
 	"github.com/andReyM228/lib/log"
 	"github.com/gofiber/fiber/v2"
@@ -21,12 +24,14 @@ import (
 type App struct {
 	config          config.Config
 	serviceName     string
-	chainRepo       repository.Chain
-	balancesService service.Balances
-	balancesHandler handler.Balances
+	chainRepo       repositories.Chain
+	balancesService services.Balances
+	balancesHandler delivery.Balances
+	transfersBroker delivery.TransfersBroker
 	logger          log.Logger
 	chain           chain_client.Client
 	router          *fiber.App
+	rabbit          rabbit.Rabbit
 }
 
 func New(name string) App {
@@ -39,21 +44,35 @@ func (a *App) Run(ctx context.Context) {
 	a.populateConfig()
 	a.initLogger()
 	a.initChainClient(ctx)
+	a.initRabbit()
 	a.initRepos()
 	a.initServices()
 	a.initHandlers()
+	a.listenRabbit()
 	a.initHTTP()
 }
 
 func (a *App) initHTTP() {
 	a.router = fiber.New()
 
-	group := a.router.Group("/v1/tx-service")
+	group := a.router.Group("/v1/tx-services")
 	group.Post("/issue", a.balancesHandler.Issue)
 	group.Post("/withdraw", a.balancesHandler.Withdraw)
 
 	a.logger.Debug("fiber api started")
 	_ = a.router.Listen(fmt.Sprintf(":%d", a.config.HTTP.Port))
+}
+
+func (a *App) listenRabbit() {
+	err := a.rabbit.Consume(bus.SubjectTxServiceIssue, a.transfersBroker.BrokerIssue)
+	if err != nil {
+		return
+	}
+
+	err = a.rabbit.Consume(bus.SubjectTxServiceWithdraw, a.transfersBroker.BrokerWithdraw)
+	if err != nil {
+		return
+	}
 }
 
 func (a *App) initChainClient(ctx context.Context) {
@@ -83,6 +102,9 @@ func (a *App) initServices() {
 
 func (a *App) initHandlers() {
 	a.balancesHandler = balancesHandler.NewHandler(a.balancesService)
+
+	a.transfersBroker = transfers.NewHandler(a.rabbit, a.logger, a.balancesService)
+
 	a.logger.Debug("handlers created")
 }
 
@@ -93,4 +115,12 @@ func (a *App) populateConfig() {
 	}
 
 	a.config = cfg
+}
+
+func (a *App) initRabbit() {
+	var err error
+	a.rabbit, err = rabbit.NewRabbitMQ(a.config.Rabbit.Url, a.logger)
+	if err != nil {
+		a.logger.Fatal(err.Error())
+	}
 }

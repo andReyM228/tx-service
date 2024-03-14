@@ -1,7 +1,7 @@
-package handler
+package delivery
 
 import (
-	"tx_service/internal/repository"
+	"tx_service/internal/repositories"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -18,7 +18,7 @@ func Respond(ctx *fiber.Ctx, statusCode int, payload interface{}) error {
 
 func HandleError(ctx *fiber.Ctx, err error) error {
 	switch err.(type) {
-	case repository.NotFound:
+	case repositories.NotFound:
 		if err := Respond(ctx, fiber.StatusNotFound, err); err != nil {
 			return err
 		}
